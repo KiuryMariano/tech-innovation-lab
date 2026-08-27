@@ -1,0 +1,86 @@
+import { useState } from 'react'
+import type { SubmitEvent } from 'react'
+import { Alert, Box, Button, Card, CardContent, Chip, TextField, Typography } from '@mui/material'
+import SearchIcon from '@mui/icons-material/Search'
+
+interface IExampleVideo {
+  label: string
+  url: string
+}
+
+const EXAMPLE_VIDEOS: IExampleVideo[] = [
+  { label: 'Reel', url: 'https://www.youtube.com/shorts/YaGfNy_X6Q8' },
+  { label: 'Vídeo geral', url: 'https://www.youtube.com/watch?v=vb1Mu8cRGKA' },
+  { label: 'Vídeo longo padrão', url: 'https://www.youtube.com/watch?v=Tl9Skg6r308' },
+]
+
+interface Props {
+  onSubmit: (url: string) => void
+  errorText: string | null
+  busy: boolean
+}
+
+export default function UrlInputCard({ onSubmit, errorText, busy }: Props) {
+  const [input, setInput] = useState('')
+
+  const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!busy) onSubmit(input)
+  }
+
+  return (
+    <Card variant="outlined">
+      <CardContent>
+        <Typography variant="h6">Link do vídeo</Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Cole a URL de um vídeo do YouTube para iniciar a detecção com YOLO.
+        </Typography>
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', gap: 1.5 }}>
+          <TextField
+            fullWidth
+            size="small"
+            disabled={busy}
+            placeholder="https://www.youtube.com/watch?v=…"
+            value={input}
+            onChange={(event) => setInput(event.target.value)}
+            error={errorText !== null}
+            slotProps={{
+              input: {
+                'aria-label': 'URL do YouTube',
+              },
+            }}
+          />
+          <Button
+            type="submit"
+            variant="contained"
+            startIcon={<SearchIcon />}
+            disabled={busy}
+            sx={{ whiteSpace: 'nowrap' }}
+          >
+            {busy ? 'Processando…' : 'Analisar'}
+          </Button>
+        </Box>
+        {errorText && (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {errorText}
+          </Alert>
+        )}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2, flexWrap: 'wrap' }}>
+          <Typography variant="caption" color="text.secondary">
+            Exemplos rápidos:
+          </Typography>
+          {EXAMPLE_VIDEOS.map((example) => (
+            <Chip
+              key={example.url}
+              label={example.label}
+              size="small"
+              clickable={!busy}
+              disabled={busy}
+              onClick={() => onSubmit(example.url)}
+            />
+          ))}
+        </Box>
+      </CardContent>
+    </Card>
+  )
+}
