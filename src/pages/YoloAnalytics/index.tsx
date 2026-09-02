@@ -13,7 +13,7 @@ import { parseYouTubeId } from './utils/youtube'
 
 const POLL_INTERVAL_MS = 800
 
-export default function App() {
+export default function YoloAnalyticsPage() {
   const [urlError, setUrlError] = useState<string | null>(null)
   const [jobError, setJobError] = useState<string | null>(null)
   const [playerError, setPlayerError] = useState<string | null>(null)
