@@ -30,24 +30,27 @@ Aplicação web que faz **reconhecimento de pessoas e objetos em vídeos do YouT
 ## Estrutura do projeto
 
 ```
-backend/
-  app/
-    main.py        # Endpoints da API (FastAPI)
-    jobs.py        # Jobs assíncronos em memória (download + análise)
-    pipeline.py    # Download (yt-dlp) e inferência YOLO (OpenCV)
-  cache/           # GERADO EM RUNTIME — timelines em cache + vídeos temporários
-  requirements.txt
-  yolo11n.pt       # Pesos do modelo (incluídos no repo; baixados se ausentes)
-  yolov8n.pt       # Pesos alternativos (fallback)
-frontend/
-  src/
-    components/    # Player, overlay de detecções, painel de estatísticas
-    hooks/         # Controle do player do YouTube
-    services/      # Cliente da API
-  vite.config.ts   # Proxy /api -> http://127.0.0.1:8000
+yolo-video-analytics/
+  backend/
+    app/
+      main.py        # Endpoints da API (FastAPI)
+      jobs.py        # Jobs assíncronos em memória (download + análise)
+      pipeline.py    # Download (yt-dlp) e inferência YOLO (OpenCV)
+    cache/           # GERADO EM RUNTIME — timelines em cache + vídeos temporários
+    requirements.txt
+    yolo11n.pt       # Pesos do modelo (incluídos no repo; baixados se ausentes)
+    yolov8n.pt       # Pesos alternativos (fallback)
+  frontend/
+    src/
+      components/    # Player, overlay de detecções, painel de estatísticas
+      hooks/         # Controle do player do YouTube
+      services/      # Cliente da API
+    vite.config.ts   # Proxy /api -> http://127.0.0.1:8000
 ```
 
 ### Pastas geradas e permissões
+
+Caminhos relativos a `yolo-video-analytics/`.
 
 | Caminho | Origem | Observações |
 |---|---|---|
@@ -77,8 +80,8 @@ Não é necessário criar nenhuma pasta manualmente: o `cache/` é criado automa
 ### 1. Clonar o repositório
 
 ```bash
-git clone https://github.com/KiuryMariano/yolo-video-analytics.git
-cd yolo-video-analytics
+git clone https://github.com/KiuryMariano/tech-innovation-lab.git
+cd tech-innovation-lab/yolo-video-analytics
 ```
 
 ### 2. Backend (API FastAPI) — Terminal 1
