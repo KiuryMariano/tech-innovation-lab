@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Alert, Box, Button, Container, Stack, Typography } from '@mui/material'
-import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrong'
+import { Alert, Box, Button, Container, Stack } from '@mui/material'
 import StopIcon from '@mui/icons-material/Stop'
+import ActivityHeader from '../../components/ActivityHeader'
+import type { DocSection } from '../../components/DocumentationModal'
 import UrlInputCard from './components/UrlInputCard'
 import VideoPanel from './components/VideoPanel'
 import type { PanelStatus } from './components/VideoPanel'
@@ -12,6 +13,40 @@ import type { ApiJob, Detection, Timeline } from './services/detectionService'
 import { parseYouTubeId } from './utils/youtube'
 
 const POLL_INTERVAL_MS = 800
+
+const DOCS: DocSection[] = [
+  {
+    heading: 'Objetivo',
+    body: 'Reconhecer pessoas e objetos em vídeos do YouTube e exibir as detecções sobrepostas ao player, sincronizadas com a reprodução, além de estatísticas agregadas por classe.',
+  },
+  {
+    heading: 'Como foi construída',
+    body: 'Frontend em React 19 + TypeScript + Material UI (página src/pages/YoloAnalytics). Backend em Python com FastAPI (pasta yolo-video-analytics/backend): download do vídeo com yt-dlp e inferência YOLO (Ultralytics, modelos yolo11n/yolov8n) sobre os frames com OpenCV, em CPU ou GPU.',
+  },
+  {
+    heading: 'Como funciona',
+    body: (
+      <ol style={{ margin: 0, paddingLeft: 20 }}>
+        <li>A URL colada vira um job assíncrono no backend.</li>
+        <li>O vídeo é baixado em H.264 (até 720p, sem áudio).</li>
+        <li>O modelo analisa os frames a 5 fps gerando a timeline (classe, confiança e posição das caixas).</li>
+        <li>A timeline fica em cache — rever o mesmo vídeo é instantâneo.</li>
+        <li>O player do YouTube reproduz o vídeo e as caixas são desenhadas conforme o tempo avança.</li>
+      </ol>
+    ),
+  },
+  {
+    heading: 'Endpoints da API',
+    body: (
+      <ul style={{ margin: 0, paddingLeft: 20 }}>
+        <li>POST /api/analyze — inicia a análise de um vídeo</li>
+        <li>GET /api/jobs/&#123;id&#125; — status e progresso do job</li>
+        <li>GET /api/jobs/&#123;id&#125;/timeline — timeline de detecções</li>
+        <li>GET /api/health — verificação de saúde</li>
+      </ul>
+    ),
+  },
+]
 
 export default function YoloAnalyticsPage() {
   const [urlError, setUrlError] = useState<string | null>(null)
@@ -148,15 +183,11 @@ export default function YoloAnalyticsPage() {
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
-      <Stack spacing={0.5} sx={{ textAlign: 'center', alignItems: 'center', mb: 3 }}>
-        <CenterFocusStrongIcon color="primary" sx={{ fontSize: 44 }} />
-        <Typography variant="h4" component="h1" sx={{ typography: { xs: 'h4', md: 'h5' } }}>
-          YOLO Video Analytics
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Reconhecimento de pessoas e objetos em vídeos do YouTube com YOLO11
-        </Typography>
-      </Stack>
+      <ActivityHeader
+        title="YOLO Video Analytics"
+        subtitle="Reconhecimento de pessoas e objetos em vídeos do YouTube com YOLO11"
+        docsSections={DOCS}
+      />
 
       <Stack spacing={2}>
         <UrlInputCard onSubmit={handleSubmit} errorText={urlError} busy={busy} />

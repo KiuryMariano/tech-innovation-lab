@@ -12,3 +12,4 @@ venv/
 # Artefatos de execução
 **/backend/cache/
 **/backend/output.jpeg
+**/backend/*.db

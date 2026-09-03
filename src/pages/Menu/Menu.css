@@ -54,6 +54,14 @@ a.activity-card:hover {
   cursor: default;
 }
 
+.activity-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #5b8cff;
+}
+
 .activity-title {
   font-size: 1.35rem;
   font-weight: 600;

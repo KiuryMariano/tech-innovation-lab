@@ -1,72 +1,58 @@
-# YOLO Video Analytics
+# Tech Innovation Lab
 
-Aplicação web que faz **reconhecimento de pessoas e objetos em vídeos do YouTube** em tempo real: você cola o link de um vídeo, o assiste direto na página e vê as detecções do modelo YOLO sobrepostas ao vídeo, sincronizadas quadro a quadro, além de estatísticas agregadas de tudo que foi detectado.
+Lab de atividades da disciplina: um **app React único na raiz** com **menu principal** e uma **rota por atividade**, cada uma com seu **backend em Python/FastAPI** dentro da própria pasta.
 
-O repositório é um **lab de atividades**: a raiz tem um app React único com o **menu principal** (rota `/`) e uma rota por atividade — hoje, `/yolo-analytics` (**YOLO Video Analytics**), cujo backend FastAPI fica em `yolo-video-analytics/backend/`.
+Cada tela de atividade possui botão **Voltar ao menu** e botão **Documentação**, que abre um modal explicando como aquela atividade foi construída e como funciona.
 
-## Objetivos do projeto
+## Atividades
 
-- **Análise automática de vídeo**: baixar um vídeo do YouTube, rodar um modelo de visão computacional (YOLO) sobre os frames e gerar uma *timeline* com todas as detecções (classe, confiança e posição na tela) ao longo do tempo.
-- **Experiência em tempo real**: em vez de processar e baixar um vídeo anotado, as caixas de detecção são desenhadas por cima do player do YouTube no navegador, sincronizadas com o instante atual da reprodução.
-- **Estatísticas agregadas**: contagem de detecções por classe, modelo utilizado, taxa de análise e duração processada.
-- **Eficiência**: resultados em cache por vídeo — analisar o mesmo vídeo duas vezes é instantâneo.
+| # | Atividade | Rota | Descrição | Backend | Porta |
+|---|---|---|---|---|---|
+| 1 | **YOLO Video Analytics** | `/yolo-analytics` | Detecção de pessoas e objetos em vídeos do YouTube com YOLO, sobreposta ao player em tempo real | `yolo-video-analytics/backend` | 8000 |
+| 2 | **Banco de Imagens** | `/image-database` | Upload de imagens com persistência em banco de dados (SQLite), tabela e pré-visualização | `image-database/backend` | 8001 |
 
-## Como funciona
+## Estrutura do repositório
 
-1. Você cola uma URL do YouTube (`watch`, `youtu.be`, `shorts`, `embed` ou `live`) no frontend.
-2. O frontend cria um **job** na API e reproduz o vídeo com o player do YouTube.
-3. O backend baixa o vídeo (stream de vídeo H.264 ≤720p, sem áudio) com `yt-dlp`.
-4. O pipeline roda **YOLO11** (ou YOLOv8 como fallback) sobre os frames a 5 fps, gerando a timeline de detecções.
-5. A timeline é salva em cache (`backend/cache/`) e o vídeo baixado é descartado.
-6. O frontend consulta o progresso do job e, ao concluir, sobrepõe as caixas de detecção ao player conforme o tempo do vídeo avança.
-
-> O projeto foi desenhado para rodar **em CPU, sem GPU e sem ffmpeg** no sistema: o download usa um stream único de vídeo H.264 (decodificado pelo OpenCV embutido) e a inferência usa o modelo *nano* (`yolo11n.pt`). Se houver GPU com CUDA disponível, ela é usada automaticamente.
+```
+tech-innovation-lab/
+├── src/                          # App React único (menu + atividades)
+│   ├── main.tsx                  # Entrada: React + BrowserRouter + tema MUI
+│   ├── App.tsx                   # Rotas de navegação
+│   ├── theme.ts                  # Tema MUI global
+│   ├── components/               # Componentes compartilhados
+│   │   ├── ActivityHeader.tsx    #   Cabeçalho padrão (voltar, documentação, título)
+│   │   └── DocumentationModal.tsx#   Modal de documentação da atividade
+│   └── pages/
+│       ├── Menu/                 # Rota "/" — menu principal da disciplina
+│       ├── YoloAnalytics/        # Atividade 1 (componentes, hooks, serviços)
+│       └── ImageDatabase/        # Atividade 2 (serviço da API)
+├── vite.config.ts                # Porta 5173 + proxy /api (8000) e /api/images (8001)
+├── yolo-video-analytics/
+│   └── backend/                  # Atividade 1 — FastAPI
+│       ├── app/
+│       │   ├── main.py           # Endpoints da API
+│       │   ├── jobs.py           # Jobs assíncronos em memória (download + análise)
+│       │   └── pipeline.py       # Download (yt-dlp) e inferência YOLO (OpenCV)
+│       ├── cache/                # GERADO EM RUNTIME — timelines em cache
+│       ├── requirements.txt
+│       ├── yolo11n.pt            # Pesos do modelo (baixados automaticamente se ausentes)
+│       └── yolov8n.pt            # Pesos alternativos (fallback)
+└── image-database/
+    └── backend/                  # Atividade 2 — FastAPI
+        ├── app/
+        │   ├── main.py           # Endpoints da API (upload, lista, preview)
+        │   └── database.py       # Conexão e criação da tabela (SQLite)
+        ├── images.db             # GERADO EM RUNTIME — banco SQLite
+        └── requirements.txt
+```
 
 ## Stack
 
 | Camada | Tecnologias |
 |---|---|
-| Backend | Python 3.12, FastAPI, Uvicorn, Ultralytics (YOLO), PyTorch, OpenCV, yt-dlp |
-| Frontend | React 19, TypeScript, Vite, React Router, Material UI (MUI), YouTube IFrame Player API |
-
-## Estrutura do projeto
-
-```
-tech-innovation-lab/        # raiz: app React único (menu + atividades)
-  src/
-    main.tsx        # Entrada: React + BrowserRouter + tema MUI
-    App.tsx         # Rotas de navegação
-    theme.ts        # Tema MUI global
-    pages/
-      Menu/           # Rota "/" — menu principal da disciplina
-      YoloAnalytics/  # Rota "/yolo-analytics" — análise de vídeos com YOLO
-        components/     # Player, overlay de detecções, painel de estatísticas
-        hooks/          # Controle do player do YouTube
-        services/       # Cliente da API
-        utils/
-  vite.config.ts              # Proxy /api -> http://127.0.0.1:8000
-  yolo-video-analytics/
-    backend/
-      app/
-        main.py       # Endpoints da API (FastAPI)
-        jobs.py       # Jobs assíncronos em memória (download + análise)
-        pipeline.py   # Download (yt-dlp) e inferência YOLO (OpenCV)
-      cache/          # GERADO EM RUNTIME — timelines em cache + vídeos temporários
-      requirements.txt
-      yolo11n.pt      # Pesos do modelo (incluídos no repo; baixados se ausentes)
-      yolov8n.pt      # Pesos alternativos (fallback)
-```
-
-### Pastas geradas e permissões
-
-| Caminho | Origem | Observações |
-|---|---|---|
-| `yolo-video-analytics/backend/venv/` | Criado por você (`python3 -m venv`) | Ambiente virtual; não vai para o git |
-| `yolo-video-analytics/backend/cache/` | Criado pelo backend em runtime | Precisa de **permissão de escrita**: grava as timelines (`*.timeline.json`) e os vídeos durante o download (o vídeo é apagado após a análise) |
-| `yolo-video-analytics/backend/*.pt` | Vem no repositório | Se apagar, o Ultralytics baixa de novo na primeira análise (precisa de internet e escrita em `backend/`) |
-| `node_modules/` (raiz) | Criado pelo `npm install` | Dependências do frontend; não vai para o git |
-
-Não é necessário criar nenhuma pasta manualmente: o `cache/` é criado automaticamente na primeira execução, desde que o usuário que roda o backend tenha permissão de escrita em `backend/`.
+| Frontend | React 19, TypeScript, Vite, React Router, Material UI (MUI) |
+| Atividade 1 | Python 3.12, FastAPI, Ultralytics (YOLO11/v8), PyTorch, OpenCV, yt-dlp |
+| Atividade 2 | Python 3.12, FastAPI, SQLite (sqlite3, sem ORM), python-multipart |
 
 ## Requisitos do sistema
 
@@ -75,111 +61,121 @@ Não é necessário criar nenhuma pasta manualmente: o `cache/` é criado automa
 | Sistema operacional | Linux, macOS ou Windows |
 | Python | **3.11 ou superior** (testado com 3.12) |
 | Node.js + npm | **Node 20 ou superior** (LTS recomendado) |
-| Git | Para clonar o repositório |
-| RAM | Mínimo 4 GB livres (recomendado 8 GB para inferência em CPU) |
-| Espaço em disco | **~4 GB** para as dependências do backend (PyTorch + CUDA libs são grandes) + ~500 MB para `node_modules` |
-| Internet | Necessária para instalar dependências, baixar os pesos do modelo (se ausentes) e baixar os vídeos do YouTube |
-| ffmpeg | **Não é necessário** |
-| GPU (CUDA) | **Opcional** — tudo roda em CPU; se houver GPU, é usada automaticamente |
+| RAM | 4 GB livres (8 GB recomendados para inferência em CPU) |
+| Disco | ~4 GB (PyTorch da atividade 1) + ~500 MB (`node_modules`) |
+| GPU (CUDA) | Opcional — atividade 1 roda em CPU e usa GPU automaticamente se disponível |
 
-## Instalação e execução
+## Como executar
 
-### 1. Clonar o repositório
+### 1. Frontend (raiz) — obrigatório
 
 ```bash
-git clone https://github.com/KiuryMariano/tech-innovation-lab.git
-cd tech-innovation-lab
-```
-
-### 2. Backend (API FastAPI) — Terminal 1
-
-Suba **primeiro o backend**, pois o frontend depende dele.
-
-```bash
-cd yolo-video-analytics/backend
-
-# Criar e ativar o ambiente virtual
-python3 -m venv venv
-source venv/bin/activate        # Linux/macOS
-# venv\Scripts\activate         # Windows (use sem "source", no cmd)
-
-# Instalar as dependências (o download do PyTorch é grande, pode demorar)
-pip install -r requirements.txt
-
-# Subir a API
-uvicorn app.main:app --reload --port 8000
-```
-
-**Verifique que o backend subiu** — em outro terminal (ou no navegador):
-
-```bash
-curl http://127.0.0.1:8000/api/health
-# Resposta esperada: {"status":"ok"}
-```
-
-- A API roda na porta **8000** e a documentação interativa (Swagger) fica em <http://127.0.0.1:8000/docs>.
-- Deixe este terminal aberto enquanto usar a aplicação; para parar o servidor, `Ctrl+C`.
-- Se os pesos `yolo11n.pt`/`yolov8n.pt` não existirem em `backend/`, o Ultralytics baixa os pesos automaticamente na primeira análise.
-
-### 3. Frontend (React + Vite) — Terminal 2
-
-Com o backend rodando, abra um **segundo terminal**:
-
-```bash
-# Na raiz do repositório (onde está o package.json do app React)
 npm install
 npm run dev
 ```
 
-**Verifique que o frontend subiu** — o terminal do Vite mostra algo como:
+A aplicação sobe em <http://localhost:5173> — o **menu principal**. As chamadas `/api` são redirecionadas pelo proxy do Vite para os backends, sem configuração extra.
 
+### 2. Backend da Atividade 1 (porta 8000)
+
+```bash
+cd yolo-video-analytics/backend
+python3 -m venv venv
+source venv/bin/activate          # Windows: venv\Scripts\activate
+pip install -r requirements.txt   # o download do PyTorch é grande
+uvicorn app.main:app --reload --port 8000
 ```
-VITE v8.x.x  ready in ... ms
-➜  Local:   http://localhost:5173/
+
+### 3. Backend da Atividade 2 (porta 8001)
+
+```bash
+cd image-database/backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8001
 ```
 
-- A aplicação roda na porta **5173**. O Vite já está configurado para redirecionar as chamadas `/api` para o backend em `127.0.0.1:8000` — não é preciso configurar mais nada.
-- Se o backend não estiver no ar, a aplicação abre mas a análise falha com "Backend indisponível".
+### Verificação
 
-### 4. Usar a aplicação
+```bash
+curl http://127.0.0.1:8000/api/health   # {"status":"ok"}
+curl http://127.0.0.1:8001/api/health   # {"status":"ok"}
+```
 
-1. Abra <http://localhost:5173> — o **menu principal** da disciplina.
-2. Clique no card **YOLO Video Analytics** (ou acesse <http://localhost:5173/yolo-analytics>).
-3. Cole um link do YouTube (ex.: `https://www.youtube.com/watch?v=dQw4w9WgXcQ`) e confirme.
-3. Acompanhe o progresso (download 0–45%, análise 45–100%). Vídeos já analisados aparecem na hora (cache).
-4. Dê play no vídeo: as caixas de detecção aparecem sincronizadas com a reprodução, e o painel lateral mostra as estatísticas.
+---
 
-> **Dica:** use vídeos curtos para testar. Por padrão, apenas os **primeiros 240 segundos** de cada vídeo são analisados (configurável, veja abaixo).
+## Atividade 1 — YOLO Video Analytics
 
-## Configurações (variáveis de ambiente)
+**Objetivo:** analisar vídeos do YouTube com um modelo de visão computacional (YOLO) e exibir as detecções sobrepostas ao player, sincronizadas com a reprodução, além de estatísticas agregadas por classe.
 
-Definidas no backend, com valores padrão sensatos:
+**Como funciona:**
+
+1. A URL colada vira um job assíncrono no backend.
+2. O vídeo é baixado em H.264 (até 720p, sem áudio — dispensa ffmpeg).
+3. O modelo analisa os frames a 5 fps gerando a timeline (classe, confiança e posição das caixas).
+4. A timeline fica em cache (`backend/cache/`) — rever o mesmo vídeo é instantâneo.
+5. O player do YouTube reproduz o vídeo e as caixas são desenhadas conforme o tempo avança.
+
+**Configurações (variáveis de ambiente no backend):**
 
 | Variável | Padrão | Descrição |
 |---|---|---|
-| `YOLO_MAX_DURATION` | `240` | Duração máxima do vídeo analisada, em segundos |
-| `YOLO_ANALYSIS_FPS` | `5` | Frames analisados por segundo de vídeo |
+| `YOLO_MAX_DURATION` | `240` | Duração máxima do vídeo analisada (segundos) |
+| `YOLO_ANALYSIS_FPS` | `5` | Frames analisados por segundo |
 | `YOLO_CONF` | `0.30` | Limiar de confiança das detecções |
 | `YOLO_IMGSZ` | `512` | Tamanho da imagem de entrada da inferência |
 
-Exemplo:
-
-```bash
-YOLO_MAX_DURATION=60 YOLO_ANALYSIS_FPS=10 uvicorn app.main:app --reload --port 8000
-```
-
-## API
+**API:**
 
 | Método | Rota | Descrição |
 |---|---|---|
-| `POST` | `/api/analyze` | Inicia a análise de um vídeo. Body: `{"url": "https://..."}` |
-| `GET` | `/api/jobs/{job_id}` | Status do job (`downloading`, `analyzing`, `done`, `error`) e progresso |
-| `GET` | `/api/jobs/{job_id}/timeline` | Timeline completa de detecções (após conclusão) |
-| `GET` | `/api/health` | Verificação de saúde da API |
+| `POST` | `/api/analyze` | Inicia a análise. Body: `{"url": "https://..."}` |
+| `GET` | `/api/jobs/{job_id}` | Status do job (`downloading`, `analyzing`, `done`, `error`) |
+| `GET` | `/api/jobs/{job_id}/timeline` | Timeline completa de detecções |
+| `GET` | `/api/health` | Verificação de saúde |
 
-## Observações
+**Observações:** jobs vivem em memória (não sobrevivem a reinício), mas o cache de timelines sim. Apague `backend/cache/<videoId>.timeline.json` para forçar nova análise. Sem GPU, tudo roda em CPU.
 
-- **Cache por vídeo**: as timelines ficam em `yolo-video-analytics/backend/cache/<videoId>.timeline.json`. Apague o arquivo do vídeo para forçar uma nova análise.
-- **Jobs em memória**: os jobs não sobrevivem a um reinício da API, mas as timelines em cache sim — reanalisar um vídeo já processado retorna resultado instantâneo.
-- **Sem áudio**: o stream baixado não tem áudio (a detecção não usa áudio e isso dispensa ffmpeg para mesclar streams).
-- **Vídeos truncados**: quando o vídeo excede a duração máxima, a timeline é marcada como `truncated` e o painel de estatísticas indica isso.
+---
+
+## Atividade 2 — Banco de Imagens
+
+**Objetivo:** API que salva imagens em um banco de dados e página web com upload, tabela das imagens salvas e pré-visualização em modal.
+
+**Como funciona:**
+
+1. Você escolhe um arquivo e confirma o upload.
+2. O backend valida o tipo (JPEG, PNG, GIF, WebP ou SVG) e grava os bytes como **BLOB** no SQLite, junto com nome, tipo, tamanho e data.
+3. A tabela lista as imagens salvas consultando os metadados.
+4. O botão **Pré-visualizar** busca os bytes por ID e exibe a imagem em um modal.
+
+**API:**
+
+| Método | Rota | Descrição |
+|---|---|---|
+| `POST` | `/api/images` | Upload multipart de uma imagem |
+| `GET` | `/api/images` | Lista as imagens salvas (metadados) |
+| `GET` | `/api/images/{id}/preview` | Devolve os bytes da imagem |
+| `GET` | `/api/health` | Verificação de saúde |
+
+**Observações:** o banco `backend/images.db` é criado automaticamente na primeira execução (não vai para o git). Não há ORM — o `database.py` usa `sqlite3` diretamente, de propósito, para fins didáticos.
+
+---
+
+## Como adicionar uma nova atividade
+
+1. **Backend:** crie `<atividade>/backend/` com FastAPI e sua própria porta (8002, 8003, …).
+2. **Página:** crie `src/pages/<Nome>/` e use o componente `ActivityHeader` (título, subtítulo, botão voltar, botão de documentação e modal), passando as seções de documentação da atividade.
+3. **Rota:** registre em `src/App.tsx`.
+4. **Menu:** adicione o card em `src/pages/Menu/index.tsx` (o slot "Em breve" vira a nova atividade).
+5. **Proxy:** se precisar de prefixo próprio, adicione a regra em `vite.config.ts` (regras mais específicas antes de `/api`).
+
+## Pastas geradas em runtime (ignoradas pelo git)
+
+| Caminho | Origem |
+|---|---|
+| `*/backend/venv/` | Ambiente virtual criado por você (`python3 -m venv`) |
+| `yolo-video-analytics/backend/cache/` | Timelines em cache + vídeos temporários |
+| `image-database/backend/images.db` | Banco SQLite da atividade 2 |
+| `node_modules/` e `dist/` | Dependências e build do frontend |
