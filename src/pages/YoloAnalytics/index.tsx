@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Alert, Box, Button, Container, Stack } from '@mui/material'
-import StopIcon from '@mui/icons-material/Stop'
+import { Alert, Box, Container, Stack } from '@mui/material'
 import ActivityHeader from '../../components/ActivityHeader'
 import type { DocSection } from '../../components/DocumentationModal'
 import UrlInputCard from './components/UrlInputCard'
@@ -60,6 +59,7 @@ export default function YoloAnalyticsPage() {
   const [everPlayed, setEverPlayed] = useState(false)
 
   const hostRef = useRef<HTMLDivElement | null>(null)
+  const videoBoxRef = useRef<HTMLDivElement | null>(null)
   const lastFrameTRef = useRef<number>(Number.NaN)
 
   const { ready: playerReady, getTime } = useYouTubePlayer(hostRef, videoId, {
@@ -148,6 +148,7 @@ export default function YoloAnalyticsPage() {
       setJob(null)
       setDetections([])
       lastFrameTRef.current = Number.NaN
+      videoBoxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       if (id !== videoId) {
         setEverPlayed(false)
         setPlayerPlaying(false)
@@ -190,7 +191,13 @@ export default function YoloAnalyticsPage() {
       />
 
       <Stack spacing={2}>
-        <UrlInputCard onSubmit={handleSubmit} errorText={urlError} busy={busy} />
+        <UrlInputCard
+          onSubmit={handleSubmit}
+          errorText={urlError}
+          busy={busy}
+          stopVisible={sessionActive && !busy}
+          onStop={stopAnalysis}
+        />
 
         {(jobError || playerError) && (
           <Alert
@@ -214,7 +221,7 @@ export default function YoloAnalyticsPage() {
           alignItems: 'start',
         }}
       >
-        <Box>
+        <Box ref={videoBoxRef} sx={{ scrollMarginTop: 16 }}>
           <VideoPanel
             hostRef={hostRef}
             playerReady={playerReady}
@@ -222,18 +229,6 @@ export default function YoloAnalyticsPage() {
             progress={progress}
             detections={detections}
           />
-          {sessionActive && !busy && (
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<StopIcon />}
-                onClick={stopAnalysis}
-              >
-                Parar análise
-              </Button>
-            </Box>
-          )}
         </Box>
 
         <Box
@@ -245,14 +240,7 @@ export default function YoloAnalyticsPage() {
             pr: 0.5,
           }}
         >
-          <StatsPanel
-            counts={timeline?.counts ?? {}}
-            detRate={timeline?.analysisFps ?? 0}
-            model={timeline?.model ?? ''}
-            truncated={timeline?.truncated ?? false}
-            sessionActive={sessionActive}
-            currentDetections={detections}
-          />
+          <StatsPanel sessionActive={sessionActive} currentDetections={detections} />
         </Box>
       </Box>
     </Container>

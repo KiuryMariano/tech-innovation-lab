@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { SubmitEvent } from 'react'
 import { Alert, Box, Button, Card, CardContent, Chip, TextField, Typography } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
+import StopIcon from '@mui/icons-material/Stop'
 
 interface IExampleVideo {
   label: string
@@ -18,9 +19,11 @@ interface Props {
   onSubmit: (url: string) => void
   errorText: string | null
   busy: boolean
+  stopVisible?: boolean
+  onStop?: () => void
 }
 
-export default function UrlInputCard({ onSubmit, errorText, busy }: Props) {
+export default function UrlInputCard({ onSubmit, errorText, busy, stopVisible, onStop }: Props) {
   const [input, setInput] = useState('')
 
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
@@ -35,7 +38,7 @@ export default function UrlInputCard({ onSubmit, errorText, busy }: Props) {
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Cole a URL de um vídeo do YouTube para iniciar a detecção com YOLO.
         </Typography>
-        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', gap: 1.5 }}>
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
           <TextField
             fullWidth
             size="small"
@@ -44,6 +47,7 @@ export default function UrlInputCard({ onSubmit, errorText, busy }: Props) {
             value={input}
             onChange={(event) => setInput(event.target.value)}
             error={errorText !== null}
+            sx={{ flex: 1, minWidth: 220 }}
             slotProps={{
               input: {
                 'aria-label': 'URL do YouTube',
@@ -55,10 +59,21 @@ export default function UrlInputCard({ onSubmit, errorText, busy }: Props) {
             variant="contained"
             startIcon={<SearchIcon />}
             disabled={busy}
-            sx={{ whiteSpace: 'nowrap' }}
+            sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
           >
             {busy ? 'Processando…' : 'Analisar'}
           </Button>
+          {stopVisible && onStop && (
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<StopIcon />}
+              onClick={onStop}
+              sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+            >
+              Parar análise
+            </Button>
+          )}
         </Box>
         {errorText && (
           <Alert severity="error" sx={{ mt: 2 }}>
