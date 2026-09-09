@@ -46,17 +46,14 @@ tech-innovation-lab/
         │   └── database.py       # Conexão e criação da tabela (SQLite)
         ├── images.db             # GERADO EM RUNTIME — banco SQLite
         └── requirements.txt
-```
-
-```
-ai-chatbot/
-└── backend/                      # Atividade 3 — FastAPI
-    ├── app/
-    │   ├── main.py               # Endpoints da API + proxy da IA (configurável via .env)
-    │   └── database.py           # Conexão e criação das tabelas (SQLite)
-    ├── chat.db                   # GERADO EM RUNTIME — banco SQLite das conversas
-    ├── requirements.txt
-    └── venv/                     # GERADO EM RUNTIME — ambiente virtual
+├──ai-chatbot/
+    └── backend/                      # Atividade 3 — FastAPI
+        ├── app/
+        │   ├── main.py               # Endpoints da API + proxy da IA (configurável via .env)
+        │   └── database.py           # Conexão e criação das tabelas (SQLite)
+        ├── chat.db                   # GERADO EM RUNTIME — banco SQLite das conversas
+        ├── requirements.txt
+        └── venv/                     # GERADO EM RUNTIME — ambiente virtual
 ```
 
 ## Stack
