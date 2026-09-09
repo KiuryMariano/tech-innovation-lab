@@ -21,7 +21,8 @@ tech-innovation-lab/
 │   ├── App.tsx                   # Rotas de navegação
 │   ├── theme.ts                  # Tema MUI global
 │   ├── components/               # Componentes compartilhados
-│   │   ├── ActivityHeader.tsx    #   Cabeçalho padrão (voltar, documentação, título)
+│   │   ├── ActivityActions.tsx   #   Botões padrão (voltar ao menu + documentação)
+│   │   ├── ActivityHeader.tsx    #   Cabeçalho padrão (título, subtítulo, ações)
 │   │   └── DocumentationModal.tsx#   Modal de documentação da atividade
 │   └── pages/
 │       ├── Menu/                 # Rota "/" — menu principal da disciplina
@@ -39,21 +40,22 @@ tech-innovation-lab/
 │       ├── requirements.txt
 │       ├── yolo11n.pt            # Pesos do modelo (baixados automaticamente se ausentes)
 │       └── yolov8n.pt            # Pesos alternativos (fallback)
-└── image-database/
-    └── backend/                  # Atividade 2 — FastAPI
+├── image-database/
+│   └── backend/                  # Atividade 2 — FastAPI
+│       ├── app/
+│       │   ├── main.py           # Endpoints da API (upload, lista, preview)
+│       │   └── database.py       # Conexão e criação da tabela (SQLite)
+│       ├── images.db             # GERADO EM RUNTIME — banco SQLite
+│       └── requirements.txt
+└── ai-chatbot/
+    └── backend/                  # Atividade 3 — FastAPI
         ├── app/
-        │   ├── main.py           # Endpoints da API (upload, lista, preview)
-        │   └── database.py       # Conexão e criação da tabela (SQLite)
-        ├── images.db             # GERADO EM RUNTIME — banco SQLite
-        └── requirements.txt
-├──ai-chatbot/
-    └── backend/                      # Atividade 3 — FastAPI
-        ├── app/
-        │   ├── main.py               # Endpoints da API + proxy da IA (configurável via .env)
-        │   └── database.py           # Conexão e criação das tabelas (SQLite)
-        ├── chat.db                   # GERADO EM RUNTIME — banco SQLite das conversas
+        │   ├── main.py           # Endpoints da API + proxy da IA (configurável via .env)
+        │   └── database.py       # Conexão e criação das tabelas (SQLite)
+        ├── .env.example          # Modelo de configuração da API de IA (copie para .env)
+        ├── chat.db               # GERADO EM RUNTIME — banco SQLite das conversas
         ├── requirements.txt
-        └── venv/                     # GERADO EM RUNTIME — ambiente virtual
+        └── venv/                 # GERADO EM RUNTIME — ambiente virtual
 ```
 
 ## Stack
