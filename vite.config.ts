@@ -7,6 +7,11 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
+      // Regra específica primeiro: /api/chat vai para o backend da atividade 3
+      '/api/chat': {
+        target: 'http://127.0.0.1:8002',
+        changeOrigin: true,
+      },
       // Regra específica primeiro: /api/images vai para o backend da atividade 2
       '/api/images': {
         target: 'http://127.0.0.1:8001',

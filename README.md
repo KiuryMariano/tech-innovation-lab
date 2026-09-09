@@ -10,6 +10,7 @@ Cada tela de atividade possui botão **Voltar ao menu** e botão **Documentaçã
 |---|---|---|---|---|---|
 | 1 | **YOLO Video Analytics** | `/yolo-analytics` | Detecção de pessoas e objetos em vídeos do YouTube com YOLO, sobreposta ao player em tempo real | `yolo-video-analytics/backend` | 8000 |
 | 2 | **Banco de Imagens** | `/image-database` | Upload de imagens com persistência em banco de dados (SQLite), tabela e pré-visualização | `image-database/backend` | 8001 |
+| 3 | **Chatbot com IA** | `/ai-chatbot` | Várias conversas persistidas em SQLite (lista à esquerda), com respostas da API GLM da Z.AI | `ai-chatbot/backend` | 8002 |
 
 ## Estrutura do repositório
 
@@ -25,8 +26,9 @@ tech-innovation-lab/
 │   └── pages/
 │       ├── Menu/                 # Rota "/" — menu principal da disciplina
 │       ├── YoloAnalytics/        # Atividade 1 (componentes, hooks, serviços)
-│       └── ImageDatabase/        # Atividade 2 (serviço da API)
-├── vite.config.ts                # Porta 5173 + proxy /api (8000) e /api/images (8001)
+│       ├── ImageDatabase/        # Atividade 2 (serviço da API)
+│       └── AiChatbot/            # Atividade 3 (componentes, serviço da API)
+├── vite.config.ts                # Porta 5173 + proxy /api (8000), /api/images (8001) e /api/chat (8002)
 ├── yolo-video-analytics/
 │   └── backend/                  # Atividade 1 — FastAPI
 │       ├── app/
@@ -46,6 +48,17 @@ tech-innovation-lab/
         └── requirements.txt
 ```
 
+```
+ai-chatbot/
+└── backend/                      # Atividade 3 — FastAPI
+    ├── app/
+    │   ├── main.py               # Endpoints da API + proxy da IA (Z.AI / GLM)
+    │   └── database.py           # Conexão e criação das tabelas (SQLite)
+    ├── chat.db                   # GERADO EM RUNTIME — banco SQLite das conversas
+    ├── requirements.txt
+    └── venv/                     # GERADO EM RUNTIME — ambiente virtual
+```
+
 ## Stack
 
 | Camada | Tecnologias |
@@ -53,6 +66,7 @@ tech-innovation-lab/
 | Frontend | React 19, TypeScript, Vite, React Router, Material UI (MUI) |
 | Atividade 1 | Python 3.12, FastAPI, Ultralytics (YOLO11/v8), PyTorch, OpenCV, yt-dlp |
 | Atividade 2 | Python 3.12, FastAPI, SQLite (sqlite3, sem ORM), python-multipart |
+| Atividade 3 | Python 3.12, FastAPI, SQLite (sqlite3, sem ORM), requests (API GLM da Z.AI) |
 
 ## Requisitos do sistema
 
@@ -96,11 +110,23 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8001
 ```
 
+### 4. Backend da Atividade 3 (porta 8002)
+
+```bash
+cd ai-chatbot/backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env    # e preencha a ZAI_API_KEY no .env (veja seção da atividade 3)
+uvicorn app.main:app --reload --port 8002
+```
+
 ### Verificação
 
 ```bash
 curl http://127.0.0.1:8000/api/health   # {"status":"ok"}
 curl http://127.0.0.1:8001/api/health   # {"status":"ok"}
+curl http://127.0.0.1:8002/api/health   # {"status":"ok"}
 ```
 
 ---
@@ -163,9 +189,43 @@ curl http://127.0.0.1:8001/api/health   # {"status":"ok"}
 
 ---
 
+## Atividade 3 — Chatbot com IA
+
+**Objetivo:** chatbot com várias conversas: a lista fica no menu à esquerda e é persistida em banco de dados SQLite, enquanto as respostas vêm de uma IA real — o backend funciona como proxy da API pública **GLM da Z.AI** (<https://docs.z.ai>), e a chave da IA nunca chega ao navegador.
+
+**Como funciona:**
+
+1. O botão **Nova conversa** limpa a seleção; a conversa só nasce no banco quando a primeira mensagem é enviada.
+2. O título da conversa é a própria primeira mensagem (limitada a 60 caracteres).
+3. Ao enviar uma mensagem, o backend grava no SQLite, monta o histórico completo e repassa para a API da Z.AI.
+4. A resposta da IA é gravada no banco e exibida como nova mensagem do assistente.
+5. Clicar em uma conversa da lista recarrega o histórico do banco — nada se perde ao fechar ou recarregar a página.
+
+**Configuração:** crie uma API key em <https://z.ai/manage-apikey/apikey-list> e preencha o arquivo `ai-chatbot/backend/.env` (copie do `.env.example`; o `.env` real não vai para o git).
+
+| Variável | Padrão | Descrição |
+|---|---|---|
+| `ZAI_API_KEY` | — | **Obrigatória** para conversar. Sem ela o backend sobe, mas responde 503 |
+| `ZAI_MODEL` | `glm-4.5-flash` | Modelo GLM usado na conversa |
+
+**API:**
+
+| Método | Rota | Descrição |
+|---|---|---|
+| `GET` | `/api/chat/conversations` | Lista as conversas (mais recentes primeiro) |
+| `GET` | `/api/chat/conversations/{id}/messages` | Mensagens de uma conversa |
+| `POST` | `/api/chat/messages` | Envia mensagem. Body: `{"conversationId": 1, "content": "..."}` (`conversationId` nulo cria a conversa) |
+| `PATCH` | `/api/chat/conversations/{id}` | Renomeia a conversa. Body: `{"title": "..."}` |
+| `DELETE` | `/api/chat/conversations/{id}` | Apaga a conversa e suas mensagens (cascade) |
+| `GET` | `/api/health` | Verificação de saúde |
+
+**Observações:** o banco `backend/chat.db` é criado automaticamente na primeira execução (não vai para o git). Sem ORM — o `database.py` usa `sqlite3` diretamente, no mesmo estilo da atividade 2. Erros da IA (chave inválida, timeout, resposta inesperada) chegam ao frontend como mensagens em português.
+
+---
+
 ## Como adicionar uma nova atividade
 
-1. **Backend:** crie `<atividade>/backend/` com FastAPI e sua própria porta (8002, 8003, …).
+1. **Backend:** crie `<atividade>/backend/` com FastAPI e sua própria porta (8003, 8004, …).
 2. **Página:** crie `src/pages/<Nome>/` e use o componente `ActivityHeader` (título, subtítulo, botão voltar, botão de documentação e modal), passando as seções de documentação da atividade.
 3. **Rota:** registre em `src/App.tsx`.
 4. **Menu:** adicione o card em `src/pages/Menu/index.tsx` (o slot "Em breve" vira a nova atividade).
@@ -178,4 +238,5 @@ curl http://127.0.0.1:8001/api/health   # {"status":"ok"}
 | `*/backend/venv/` | Ambiente virtual criado por você (`python3 -m venv`) |
 | `yolo-video-analytics/backend/cache/` | Timelines em cache + vídeos temporários |
 | `image-database/backend/images.db` | Banco SQLite da atividade 2 |
+| `ai-chatbot/backend/chat.db` | Banco SQLite das conversas da atividade 3 |
 | `node_modules/` e `dist/` | Dependências e build do frontend |

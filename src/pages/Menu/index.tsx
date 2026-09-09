@@ -24,10 +24,17 @@ const ACTIVITIES: Activity[] = [
     to: '/image-database',
     available: true,
   },
+  {
+    label: 'Atividade 3',
+    title: 'Chatbot com IA',
+    description: 'Converse com uma IA real via API GLM da Z.AI (FastAPI + React).',
+    to: '/ai-chatbot',
+    available: true,
+  },
 ]
 
 const NEXT_SLOT: Activity = {
-  label: 'Atividade 3',
+  label: 'Atividade 4',
   title: 'Em breve',
   description: 'A próxima atividade da disciplina aparecerá aqui.',
   to: '#',
