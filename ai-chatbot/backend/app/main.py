@@ -15,9 +15,10 @@ from . import database
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BACKEND_DIR / ".env")
 
-ZAI_API_KEY = os.environ.get("ZAI_API_KEY", "")
-ZAI_MODEL = os.environ.get("ZAI_MODEL", "glm-4.5-flash")
-ZAI_CHAT_URL = "https://api.z.ai/api/paas/v4/chat/completions"
+AI_API_KEY = os.environ.get("AI_API_KEY", "")
+AI_MODEL = os.environ.get("AI_MODEL", "glm-4.5-flash")
+AI_BASE_URL = os.environ.get("AI_BASE_URL", "https://api.z.ai/api/paas/v4")
+AI_CHAT_URL = f"{AI_BASE_URL.rstrip('/')}/chat/completions"
 REQUEST_TIMEOUT_SEC = 60.0
 TITLE_MAX_CHARS = 60
 
@@ -129,10 +130,10 @@ def send_message(request: SendMessageRequest):
     content = request.content.strip()
     if not content:
         raise HTTPException(status_code=400, detail="A mensagem está vazia. Escreva algo antes de enviar.")
-    if not ZAI_API_KEY:
+    if not AI_API_KEY:
         raise HTTPException(
             status_code=503,
-            detail="A API de IA não está configurada. Defina a variável de ambiente ZAI_API_KEY.",
+            detail="A API de IA não está configurada. Defina a variável de ambiente AI_API_KEY.",
         )
 
     with database.get_connection() as connection:
@@ -156,7 +157,7 @@ def send_message(request: SendMessageRequest):
         ).fetchall()
 
     payload = {
-        "model": ZAI_MODEL,
+        "model": AI_MODEL,
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
             *[{"role": row["role"], "content": row["content"]} for row in history_rows],
@@ -166,9 +167,9 @@ def send_message(request: SendMessageRequest):
 
     try:
         response = requests.post(
-            ZAI_CHAT_URL,
+            AI_CHAT_URL,
             json=payload,
-            headers={"Authorization": f"Bearer {ZAI_API_KEY}"},
+            headers={"Authorization": f"Bearer {AI_API_KEY}"},
             timeout=REQUEST_TIMEOUT_SEC,
         )
     except requests.exceptions.Timeout as exc:
@@ -207,4 +208,4 @@ def send_message(request: SendMessageRequest):
         )
         database.touch_conversation(connection, conversation_id)
 
-    return {"conversationId": conversation_id, "reply": reply, "model": body.get("model", ZAI_MODEL)}
+    return {"conversationId": conversation_id, "reply": reply, "model": body.get("model", AI_MODEL)}

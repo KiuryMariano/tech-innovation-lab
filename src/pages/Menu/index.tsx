@@ -27,7 +27,7 @@ const ACTIVITIES: Activity[] = [
   {
     label: 'Atividade 3',
     title: 'Chatbot com IA',
-    description: 'Converse com uma IA real via API GLM da Z.AI (FastAPI + React).',
+    description: 'Converse com uma IA real via API compatível com OpenAI (FastAPI + React).',
     to: '/ai-chatbot',
     available: true,
   },

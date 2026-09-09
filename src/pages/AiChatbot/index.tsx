@@ -17,11 +17,11 @@ import type { ChatMessage, Conversation } from './services/chatService'
 const DOCS: DocSection[] = [
   {
     heading: 'Objetivo',
-    body: 'Um chatbot com várias conversas, no estilo de interfaces de IA conhecidas: a lista de conversas fica no menu à esquerda, persistida em banco de dados SQLite, e as respostas vêm de uma IA real via API GLM da Z.AI.',
+    body: 'Um chatbot com várias conversas, no estilo de interfaces de IA conhecidas: a lista de conversas fica no menu à esquerda, persistida em banco de dados SQLite, e as respostas vêm de uma IA real via API pública (por padrão, a API GLM da Z.AI).',
   },
   {
     heading: 'Como foi construída',
-    body: 'Backend em Python com FastAPI (pasta ai-chatbot/backend). O banco (backend/chat.db) usa SQLite puro, sem ORM: a tabela conversations guarda título e datas, e a tabela messages guarda cada troca (papel, texto, data) ligada à conversa. As respostas da IA vêm do proxy para a API da Z.AI, com a chave guardada no arquivo .env do backend. Frontend em React 19 + TypeScript + Material UI (página src/pages/AiChatbot), com o proxy do Vite direcionando /api/chat para a porta 8002.',
+    body: 'Backend em Python com FastAPI (pasta ai-chatbot/backend). O banco (backend/chat.db) usa SQLite puro, sem ORM: a tabela conversations guarda título e datas, e a tabela messages guarda cada troca (papel, texto, data) ligada à conversa. O backend funciona como proxy da API de IA, configurável pelo arquivo .env: AI_BASE_URL (qualquer provedora compatível com OpenAI, como Z.AI, OpenAI, OpenRouter, Groq, Gemini, Mistral e DeepSeek), AI_API_KEY e AI_MODEL. Frontend em React 19 + TypeScript + Material UI (página src/pages/AiChatbot), com o proxy do Vite direcionando /api/chat para a porta 8002.',
   },
   {
     heading: 'Como funciona',
@@ -29,7 +29,7 @@ const DOCS: DocSection[] = [
       <ol style={{ margin: 0, paddingLeft: 20 }}>
         <li>O botão Nova conversa limpa a seleção; a conversa só nasce no banco quando você envia a primeira mensagem.</li>
         <li>O título da conversa é a própria primeira mensagem (limitada a 60 caracteres).</li>
-        <li>Ao enviar uma mensagem, o backend salva no SQLite, monta o histórico completo da conversa e repassa para a API da Z.AI.</li>
+        <li>Ao enviar uma mensagem, o backend salva no SQLite, monta o histórico completo da conversa e repassa para a API de IA configurada no .env.</li>
         <li>A resposta da IA é gravada no banco e exibida como uma nova mensagem do assistente.</li>
         <li>Ao clicar em uma conversa na lista, o histórico é recarregado do banco — nada se perde ao recarregar a página.</li>
         <li>No menu "…" de cada conversa é possível renomear (com confirmação de entrada) ou apagar (com confirmação antes de remover); as mensagens vão junto, pelo cascade do banco.</li>

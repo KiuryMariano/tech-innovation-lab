@@ -10,7 +10,7 @@ Cada tela de atividade possui botão **Voltar ao menu** e botão **Documentaçã
 |---|---|---|---|---|---|
 | 1 | **YOLO Video Analytics** | `/yolo-analytics` | Detecção de pessoas e objetos em vídeos do YouTube com YOLO, sobreposta ao player em tempo real | `yolo-video-analytics/backend` | 8000 |
 | 2 | **Banco de Imagens** | `/image-database` | Upload de imagens com persistência em banco de dados (SQLite), tabela e pré-visualização | `image-database/backend` | 8001 |
-| 3 | **Chatbot com IA** | `/ai-chatbot` | Várias conversas persistidas em SQLite (lista à esquerda), com respostas da API GLM da Z.AI | `ai-chatbot/backend` | 8002 |
+| 3 | **Chatbot com IA** | `/ai-chatbot` | Várias conversas persistidas em SQLite (lista à esquerda), com respostas de uma API de IA configurável (padrão: Z.AI) | `ai-chatbot/backend` | 8002 |
 
 ## Estrutura do repositório
 
@@ -52,7 +52,7 @@ tech-innovation-lab/
 ai-chatbot/
 └── backend/                      # Atividade 3 — FastAPI
     ├── app/
-    │   ├── main.py               # Endpoints da API + proxy da IA (Z.AI / GLM)
+    │   ├── main.py               # Endpoints da API + proxy da IA (configurável via .env)
     │   └── database.py           # Conexão e criação das tabelas (SQLite)
     ├── chat.db                   # GERADO EM RUNTIME — banco SQLite das conversas
     ├── requirements.txt
@@ -66,7 +66,7 @@ ai-chatbot/
 | Frontend | React 19, TypeScript, Vite, React Router, Material UI (MUI) |
 | Atividade 1 | Python 3.12, FastAPI, Ultralytics (YOLO11/v8), PyTorch, OpenCV, yt-dlp |
 | Atividade 2 | Python 3.12, FastAPI, SQLite (sqlite3, sem ORM), python-multipart |
-| Atividade 3 | Python 3.12, FastAPI, SQLite (sqlite3, sem ORM), requests (API GLM da Z.AI) |
+| Atividade 3 | Python 3.12, FastAPI, SQLite (sqlite3, sem ORM), requests (API de IA compatível com OpenAI) |
 
 ## Requisitos do sistema
 
@@ -117,7 +117,7 @@ cd ai-chatbot/backend
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env    # e preencha a ZAI_API_KEY no .env (veja seção da atividade 3)
+cp .env.example .env    # e preencha a AI_API_KEY no .env (veja seção da atividade 3)
 uvicorn app.main:app --reload --port 8002
 ```
 
@@ -191,22 +191,37 @@ curl http://127.0.0.1:8002/api/health   # {"status":"ok"}
 
 ## Atividade 3 — Chatbot com IA
 
-**Objetivo:** chatbot com várias conversas: a lista fica no menu à esquerda e é persistida em banco de dados SQLite, enquanto as respostas vêm de uma IA real — o backend funciona como proxy da API pública **GLM da Z.AI** (<https://docs.z.ai>), e a chave da IA nunca chega ao navegador.
+**Objetivo:** chatbot com várias conversas: a lista fica no menu à esquerda e é persistida em banco de dados SQLite, enquanto as respostas vêm de uma IA real — o backend funciona como proxy da API de IA **de qualquer provedora compatível com OpenAI** (Z.AI por padrão), e a chave nunca chega ao navegador.
 
 **Como funciona:**
 
 1. O botão **Nova conversa** limpa a seleção; a conversa só nasce no banco quando a primeira mensagem é enviada.
 2. O título da conversa é a própria primeira mensagem (limitada a 60 caracteres).
-3. Ao enviar uma mensagem, o backend grava no SQLite, monta o histórico completo e repassa para a API da Z.AI.
+3. Ao enviar uma mensagem, o backend grava no SQLite, monta o histórico completo e repassa para a API de IA configurada.
 4. A resposta da IA é gravada no banco e exibida como nova mensagem do assistente.
 5. Clicar em uma conversa da lista recarrega o histórico do banco — nada se perde ao fechar ou recarregar a página.
 
-**Configuração:** crie uma API key em <https://z.ai/manage-apikey/apikey-list> e preencha o arquivo `ai-chatbot/backend/.env` (copie do `.env.example`; o `.env` real não vai para o git).
+**Configuração:** preencha o arquivo `ai-chatbot/backend/.env` (copie do `.env.example`; o `.env` real não vai para o git). O padrão é a API GLM da **Z.AI**, mas **qualquer provedora com API no formato OpenAI** funciona — basta trocar a URL base, a chave e (opcionalmente) o modelo.
 
 | Variável | Padrão | Descrição |
 |---|---|---|
-| `ZAI_API_KEY` | — | **Obrigatória** para conversar. Sem ela o backend sobe, mas responde 503 |
-| `ZAI_MODEL` | `glm-4.5-flash` | Modelo GLM usado na conversa |
+| `AI_BASE_URL` | `https://api.z.ai/api/paas/v4` | URL base da API de IA (compatível com OpenAI; o backend anexa `/chat/completions`) |
+| `AI_API_KEY` | — | **Obrigatória** para conversar. Sem ela o backend sobe, mas responde 503 |
+| `AI_MODEL` | `glm-4.5-flash` | Modelo usado na conversa |
+
+**Provedoras conhecidas compatíveis (formato OpenAI):**
+
+| Provedora | `AI_BASE_URL` | Exemplo de `AI_MODEL` | Chave em |
+|---|---|---|---|
+| Z.AI (padrão) | `https://api.z.ai/api/paas/v4` | `glm-4.5-flash` | <https://z.ai/manage-apikey/apikey-list> |
+| OpenAI | `https://api.openai.com/v1` | `gpt-4o-mini` | <https://platform.openai.com/api-keys> |
+| OpenRouter | `https://openrouter.ai/api/v1` | `deepseek/deepseek-chat-v3:free` | <https://openrouter.ai/keys> |
+| Groq | `https://api.groq.com/openai/v1` | `llama-3.3-70b-versatile` | <https://console.groq.com/keys> |
+| Google Gemini | `https://generativelanguage.googleapis.com/v1beta/openai` | `gemini-2.0-flash` | <https://aistudio.google.com/apikey> |
+| Mistral | `https://api.mistral.ai/v1` | `mistral-small-latest` | <https://console.mistral.ai/api-keys> |
+| DeepSeek | `https://api.deepseek.com/v1` | `deepseek-chat` | <https://platform.deepseek.com> |
+
+Observações: os nomes de modelos mudam com frequência — confira sempre o catálogo atual de cada provedora. Alguns modelos do OpenRouter têm sufixo `:free` (gratuitos, com limite diário). Provedoras fora do formato OpenAI (ex.: Anthropic Claude API nativa) exigiriam adaptar o `main.py`.
 
 **API:**
 
